@@ -1,0 +1,22 @@
+[project]
+name = "real-estate-visualizer"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Douglas Schonholtz", email = "schonholtzd@gmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "folium>=0.19.6",
+    "geopandas>=1.0.1",
+    "numpy>=2.2.6",
+    "pandas>=2.2.3",
+]
+
+[project.scripts]
+real-estate-visualizer = "real_estate_visualizer:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

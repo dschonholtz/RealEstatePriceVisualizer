@@ -1,0 +1,189 @@
+# Cursor Rules for Real Estate Visualizer Project
+
+## Package Management
+
+- **NEVER use pip directly** - this project uses uv for all package management
+- Use `uv add <package>` to add new dependencies
+- Use `uv add --group dev <package>` for development dependencies
+- Use `uv remove <package>` to remove dependencies
+- Use `uv sync` to install/update all dependencies
+- Use `uv run <command>` to run scripts within the virtual environment
+
+## Development Workflow
+
+- Use `uv run python <script>` to run Python scripts
+- Use `uv run pytest` for running tests (ALWAYS test functionality)
+- Use `uv run black .` for code formatting
+- Use `uv run isort .` for import sorting
+- Test each component as you build it - don't wait until the end
+
+## Project Structure
+
+- Main package code goes in `src/real_estate_visualizer/`
+- Data files go in `data/` directory
+- Permanent scripts go in `scripts/` directory (e.g., main visualization scripts)
+- Temporary/test scripts go in `scratch/` directory (for one-off debugging/testing)
+- **Clean scratch/ regularly** - delete temp files when done
+- Unit tests go in `tests/` directory
+- Generated outputs go in appropriate output directories (e.g., `scripts/[script]_output/`)
+
+## Terminal/PowerShell Workarounds
+
+- **PowerShell display issues**: Commands may show errors but still execute successfully
+- **Check for actual output**: Look for generated files, don't rely on terminal display
+- **Use timeout commands**: `timeout 30 command` to avoid hanging
+- **Simple test scripts**: Create minimal test scripts to verify functionality
+- **File-based verification**: Write results to files for inspection
+
+## Testing Strategy
+
+- **Unit test each data processing function**
+- **Test visualization outputs by checking file existence and basic properties**
+- **Create screenshot verification workflow for HTML maps**
+- **Test data coverage and quality before creating visualizations**
+
+## Visualization Verification
+
+- **Always generate test outputs to verify results**
+- **Use automated screenshot tools to capture HTML renderings**
+- **Inspect data coverage and color schemes programmatically**
+- **Create validation scripts to check map quality**
+
+## Python Environment
+
+- This project requires Python >=3.10
+- Virtual environment is managed automatically by uv
+- Dependencies are specified in pyproject.toml
+
+## Key Dependencies
+
+- geopandas: For geospatial data processing
+- folium: For interactive web maps
+- matplotlib: For static maps and screenshots
+- plotly: For interactive charts
+- pandas: For data analysis
+- selenium/playwright: For HTML screenshot automation
+
+## Data Format
+
+- Input: Boston GeoJSON parcels + CSV assessment data
+- Output: HTML interactive maps, PNG screenshots, CSV data, neighborhood value visualizations
+
+## MANDATORY Task Management & Cleanup Protocol
+
+**EVERY TASK MUST FOLLOW THIS COMPLETE WORKFLOW - NO EXCEPTIONS:**
+
+### 1. Task Initiation
+
+- **Compress previous task details** in TASK_LIST.md (keep only essential outcomes)
+- **Create new hierarchical task entry** with clear sub-steps
+- **Define success criteria** and expected outputs
+
+### 2. Development Phase
+
+- Work in `scratch/` for experimentation
+- Test incrementally as you build
+- Document progress in TASK_LIST.md
+
+### 3. MANDATORY Pre-Completion Cleanup
+
+**BEFORE reporting task complete, ALWAYS execute this cleanup:**
+
+#### A. File Cleanup
+
+- **Remove ALL temporary files** from `scratch/`
+- **Delete outdated scripts** that are superseded
+- **Remove ALL generated outputs** that will be regenerated
+- **Delete duplicate/redundant files**
+- **Remove .DS_Store and other system files**
+
+#### B. Code Cleanup
+
+- **Keep ONLY the best/final script version**
+- **Remove experimental/test scripts**
+- **Ensure production script is clean and documented**
+
+#### C. Documentation Cleanup
+
+- **Update TASK_LIST.md** with hierarchical task completion
+- **Compress completed task details** to essential outcomes only
+- **NEVER create additional markdown files** (only README.md and TASK_LIST.md allowed)
+
+### 4. Verification Requirements
+
+- **Run complete test suite**: `uv run pytest` must pass
+- **Verify main script functionality**: Production script must work
+- **Check that cleanup didn't break anything**
+
+### 5. Task Completion
+
+- **Mark task complete in TASK_LIST.md**
+- **Set next task priorities**
+- **Confirm all cleanup completed**
+
+**TASK IS NOT COMPLETE UNTIL ALL CLEANUP IS VERIFIED SUCCESSFUL**
+
+## Hierarchical Task Tracking
+
+**ALL work must be tracked hierarchically in TASK_LIST.md:**
+
+```
+## Current Sprint: [Sprint Name]
+
+### Task 1: [Main Task Name]
+- [ ] 1.1 Subtask A
+  - [ ] 1.1.1 Implementation step
+  - [ ] 1.1.2 Testing step
+  - [ ] 1.1.3 Cleanup step
+- [ ] 1.2 Subtask B
+- [x] 1.3 Completed Subtask (compressed details)
+
+### Task 2: [Next Task]
+...
+```
+
+## Documentation Standards
+
+**ONLY maintain these 2 files - NO EXCEPTIONS:**
+
+- `README.md` - User documentation (installation, usage, API)
+- `TASK_LIST.md` - Development tracking (hierarchical tasks, progress, priorities)
+
+**NEVER create:**
+
+- STATUS.md, PROJECT*STATE.md, SPRINT*\*.md, or any other markdown files
+- Multiple documentation files with overlapping content
+- Temporary documentation that should be in TASK_LIST.md
+
+## Output Organization Standards
+
+### Production Files (Keep & Document)
+
+- `scripts/[main_script].py` - Primary production script ONLY
+- `scripts/[script]_output/` - Final production outputs (regenerated each run)
+- `tests/` - All test files (permanent)
+- `src/` - All source code (permanent)
+
+### Development Files (ALWAYS Clean)
+
+- `scratch/` - **MUST be cleaned after every task**
+- Remove ALL temporary scripts, outputs, and test files
+- No permanent files in scratch/
+
+### Archive Strategy
+
+- **Keep**: Only final production script and source code
+- **Remove**: ALL intermediate files, duplicate scripts, old outputs
+- **Regenerate**: All visualizations and outputs with each run
+
+## Best Practices
+
+- **Test-driven development**: Write tests first, then implement
+- Always use uv commands instead of pip
+- Keep dependencies up to date with `uv sync`
+- Use type hints in new code
+- Follow PEP 8 style guidelines
+- **Verify outputs visually** - don't just trust that code runs
+- **MANDATORY cleanup before task completion** - follow protocol above
+- **Track ALL work hierarchically** in TASK_LIST.md
+- **Compress task details** when starting new tasks
