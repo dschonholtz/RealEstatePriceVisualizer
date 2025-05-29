@@ -175,6 +175,7 @@ tmp/
 # Generated HTML maps and visualizations
 *.html
 !README.html
+!index.html
 
 # Generated images and screenshots
 *.png
