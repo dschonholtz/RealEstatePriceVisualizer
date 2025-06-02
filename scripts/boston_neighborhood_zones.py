@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
-Boston Property Value Visualization Script
+Greater Boston Metro Property Value Visualization Script
 
-This script loads Boston parcel and assessment data from the geodatabase
+This script loads Greater Boston metro area parcel and assessment data from the MassGIS geodatabase
 and creates property value visualizations. Choose which type to generate:
 
-1. Parcel Choropleth: Colors actual property boundaries (most accurate, 438MB, SLOW)
+1. Parcel Choropleth: Colors actual property boundaries (most accurate, large file, SLOWER)
 2. Quartile Heat Map: Neighborhood overview with quartile zones (lightweight, FAST)
 3. Multi-Tier Heat Map: Layered neighborhood tiers (great for luxury vs affordable, FAST)
 4. Grid-Based Zones: Quarter-mile-by-quarter-mile grid with median values using deciles (no interpolation, FAST)
+5. Grid + Transit Overlay: Property grid PLUS MBTA transit stops and accessibility zones (FAST)
 
-Usage: python boston_neighborhood_zones.py [1|2|3|4]
+Usage: python boston_neighborhood_zones.py [1|2|3|4|5]
 Or run without arguments for interactive selection.
 """
 
@@ -24,7 +25,7 @@ import pandas as pd
 # Add the src directory to the path so we can import our modules
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from real_estate_visualizer.improved_heat_maps import NeighborhoodValueVisualizer
+from real_estate_visualizer import NeighborhoodValueVisualizer
 
 # Set up logging
 logging.basicConfig(
@@ -35,34 +36,78 @@ logger = logging.getLogger(__name__)
 
 def load_boston_data():
     """
-    Load Boston parcel and assessment data from the geodatabase.
+    Load Greater Boston metro area parcel and assessment data from the MassGIS Level 3 Parcels dataset.
 
     Returns:
         gpd.GeoDataFrame: Combined parcel and assessment data
     """
-    logger.info("Loading Boston parcel and assessment data...")
+    logger.info("Loading Greater Boston metro area parcel and assessment data...")
 
-    # Path to the geodatabase
-    gdb_path = Path(__file__).parent.parent / "data" / "M035_parcels_CY22_FY23_sde.gdb"
+    # Path to the new MassGIS geodatabase
+    gdb_path = (
+        Path(__file__).parent.parent
+        / "data"
+        / "MassGIS_L3_Parcels_gdb"
+        / "MassGIS_L3_Parcels.gdb"
+    )
 
     if not gdb_path.exists():
         raise FileNotFoundError(f"Geodatabase not found at {gdb_path}")
 
     try:
-        # Load parcel geometries
-        logger.info("Loading parcel geometries from M035TaxPar layer...")
-        parcels_gdf = gpd.read_file(str(gdb_path), layer="M035TaxPar")
-        logger.info(f"Loaded {len(parcels_gdf)} parcels")
+        # Load assessment data first to filter by city
+        logger.info("Loading assessment data from L3_ASSESS layer...")
+        assessment_gdf = gpd.read_file(str(gdb_path), layer="L3_ASSESS")
+        assessment_df = pd.DataFrame(assessment_gdf)
+        logger.info(f"Loaded {len(assessment_df):,} assessment records")
 
-        # Load assessment data
-        logger.info("Loading assessment data from M035Assess layer...")
-        assessment_df = gpd.read_file(str(gdb_path), layer="M035Assess")
-        logger.info(f"Loaded {len(assessment_df)} assessment records")
+        # Filter to Greater Boston metro area cities only
+        metro_cities = [
+            "BOSTON",
+            "CAMBRIDGE",
+            "SOMERVILLE",
+            "BROOKLINE",
+            "NEWTON",
+            "WATERTOWN",
+            "WALTHAM",
+            "BELMONT",
+            "ARLINGTON",
+            "LEXINGTON",
+            "WINCHESTER",
+            "MEDFORD",
+            "MALDEN",
+            "EVERETT",
+            "REVERE",
+            "CHELSEA",
+            "WINTHROP",
+            "QUINCY",
+            "MILTON",
+            "DEDHAM",
+            "NEEDHAM",
+        ]
 
-        # Join the data on LOC_ID
+        if "CITY" in assessment_df.columns:
+            metro_assessment = assessment_df[
+                assessment_df["CITY"].str.upper().isin(metro_cities)
+            ].copy()
+            logger.info(
+                f"Filtered to {len(metro_assessment):,} Greater Boston metro assessment records"
+            )
+        else:
+            logger.warning("No CITY column found, using all data")
+            metro_assessment = assessment_df.copy()
+
+        # Load parcel geometries from L3_TAXPAR_POLY layer
+        logger.info("Loading parcel geometries from L3_TAXPAR_POLY layer...")
+        parcels_gdf = gpd.read_file(str(gdb_path), layer="L3_TAXPAR_POLY")
+        logger.info(f"Loaded {len(parcels_gdf):,} parcels")
+
+        # Join the data on LOC_ID (only for the filtered cities)
         logger.info("Joining parcel and assessment data...")
-        combined_gdf = parcels_gdf.merge(assessment_df, on="LOC_ID", how="inner")
-        logger.info(f"Successfully joined data. Result has {len(combined_gdf)} records")
+        combined_gdf = parcels_gdf.merge(metro_assessment, on="LOC_ID", how="inner")
+        logger.info(
+            f"Successfully joined data. Result has {len(combined_gdf):,} records"
+        )
 
         # Ensure we're in WGS84 for web mapping
         if combined_gdf.crs != "EPSG:4326":
@@ -106,32 +151,32 @@ def get_visualization_choice():
     if len(sys.argv) > 1:
         try:
             choice = int(sys.argv[1])
-            if choice in [1, 2, 3, 4]:
+            if choice in [1, 2, 3, 4, 5]:
                 return choice
             else:
-                print("Invalid argument. Use 1, 2, 3, or 4.")
+                print("Invalid argument. Use 1, 2, 3, 4, or 5.")
                 sys.exit(1)
         except ValueError:
-            print("Invalid argument. Use 1, 2, 3, or 4.")
+            print("Invalid argument. Use 1, 2, 3, 4, or 5.")
             sys.exit(1)
 
     # Interactive selection
     print("\n" + "=" * 70)
-    print("BOSTON PROPERTY VALUE VISUALIZATION - SELECT TYPE")
+    print("GREATER BOSTON METRO PROPERTY VALUE VISUALIZATION - SELECT TYPE")
     print("=" * 70)
     print("1. 📊 Parcel Choropleth")
     print("   ✅ Most accurate - actual property boundaries")
-    print("   ❌ SLOW generation (2-3 minutes), large file (438MB)")
+    print("   ❌ SLOWER generation, larger file")
     print("   🎯 Best for: Detailed property analysis")
 
     print("\n2. 🎯 Quartile Heat Map")
     print("   ✅ FAST generation (~30 seconds), small file")
-    print("   ✅ Perfect neighborhood overview")
+    print("   ✅ Perfect metro area overview")
     print("   🎯 Best for: Quick identification of expensive vs affordable areas")
 
     print("\n3. 🏆 Multi-Tier Heat Map")
     print("   ✅ FAST generation (~30 seconds), small file")
-    print("   ✅ Shows distinct neighborhood tiers (Affordable/Moderate/High/Luxury)")
+    print("   ✅ Shows distinct metro area tiers (Affordable/Moderate/High/Luxury)")
     print("   🎯 Best for: Luxury vs affordable area analysis")
 
     print("\n4. 📋 Grid-Based Zones")
@@ -139,17 +184,22 @@ def get_visualization_choice():
     print("   ✅ Quarter-mile-by-quarter-mile grid with median values using deciles")
     print("   🎯 Best for: Quick overview of median property values")
 
+    print("\n5. 🚇 Grid + Transit Overlay")
+    print("   ✅ FAST generation (~45 seconds), medium file")
+    print("   ✅ Property grid PLUS MBTA transit stops and accessibility zones")
+    print("   🎯 Best for: Understanding transit impact on property values")
+
     print("\n" + "=" * 70)
 
     while True:
         try:
-            choice = int(input("Enter your choice (1, 2, 3, or 4): "))
-            if choice in [1, 2, 3, 4]:
+            choice = int(input("Enter your choice (1, 2, 3, 4, or 5): "))
+            if choice in [1, 2, 3, 4, 5]:
                 return choice
             else:
-                print("Please enter 1, 2, 3, or 4.")
+                print("Please enter 1, 2, 3, 4, or 5.")
         except ValueError:
-            print("Please enter a valid number (1, 2, 3, or 4).")
+            print("Please enter a valid number (1, 2, 3, 4, or 5).")
         except KeyboardInterrupt:
             print("\nExiting...")
             sys.exit(0)
@@ -157,7 +207,9 @@ def get_visualization_choice():
 
 def main():
     """Main function to generate selected property value visualization."""
-    logger.info("Starting Boston Property Value Visualization generation...")
+    logger.info(
+        "Starting Greater Boston Metro Property Value Visualization generation..."
+    )
 
     try:
         # Get user's visualization choice
@@ -221,6 +273,18 @@ def main():
             output_path = output_dir / "boston_grid_based_zones.html"
             map_name = "Grid-Based Zones"
 
+        elif choice == 5:
+            # Grid + Transit Overlay (FAST combined property grid + transit overlay)
+            print(
+                f"\n🔄 Generating Grid + Transit Overlay... (This will take ~45 seconds)"
+            )
+            logger.info(
+                "Creating grid + transit overlay map with property values and transit stops..."
+            )
+            map_obj = visualizer.create_grid_with_transit_overlay(gdf)
+            output_path = output_dir / "boston_grid_plus_transit_overlay.html"
+            map_name = "Grid + Transit Overlay"
+
         # Save the map
         visualizer.save_map(map_obj, output_path)
         logger.info(f"{map_name} generated successfully!")
@@ -256,6 +320,11 @@ def main():
             print("• Click grid squares to see median values and property counts")
             print("• Each square represents 0.25 mile × 0.25 mile area")
             print("• ✅ No interpolation to zero - shows actual median values only")
+            print("• ✅ Uses decile classification (10 groups) for finer granularity")
+        elif choice == 5:
+            print("• Click grid squares to see property values and transit stops")
+            print("• Each square represents 0.25 mile × 0.25 mile area")
+            print("• ✅ No interpolation to zero - shows actual property values only")
             print("• ✅ Uses decile classification (10 groups) for finer granularity")
 
         print(f"\n💡 To generate a different visualization, run the script again!")
