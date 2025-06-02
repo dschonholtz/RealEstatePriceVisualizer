@@ -14,6 +14,8 @@ import pandas as pd
 import numpy as np
 from shapely.geometry import Point, box
 
+from .university_data import BostonUniversityData
+
 logger = logging.getLogger(__name__)
 
 
@@ -45,6 +47,7 @@ class GridBasedVisualizer:
             "DEDHAM",
             "NEEDHAM",
         ]
+        self.university_data = BostonUniversityData()
 
     def _load_rail_transit_data(self):
         """Load only rail transit data (Heavy Rail, Light Rail, Commuter Rail) - no buses."""
@@ -459,5 +462,174 @@ class GridBasedVisualizer:
             logger.info(
                 "No rail transit data available - continuing with property grid only"
             )
+
+        return map_obj
+
+    def _add_university_overlay(self, folium_map, filter_by_bounds=True):
+        """Add university markers with logos to the map."""
+        logger.info("Adding university markers to map...")
+
+        universities = self.university_data.universities
+
+        # Filter universities to map bounds if requested
+        if filter_by_bounds:
+            bounds = folium_map.get_bounds()
+            if bounds:
+                min_lat, min_lon = bounds[0]
+                max_lat, max_lon = bounds[1]
+                universities = self.university_data.get_universities_in_bounds(
+                    min_lat, max_lat, min_lon, max_lon
+                )
+
+        # Add markers for each university
+        for uni in universities:
+            # Size marker based on enrollment (larger universities get bigger markers)
+            enrollment = uni["enrollment"]
+            if enrollment > 20000:
+                radius = 8
+                weight = 3
+            elif enrollment > 10000:
+                radius = 6
+                weight = 2
+            elif enrollment > 5000:
+                radius = 5
+                weight = 2
+            else:
+                radius = 4
+                weight = 1
+
+            # Color based on university type
+            color = (
+                "#1f77b4" if uni["type"] == "Private" else "#ff7f0e"
+            )  # Blue for private, orange for public
+
+            # Create detailed popup
+            popup_html = f"""
+            <div style="font-family: Arial, sans-serif; width: 280px;">
+                <h3 style="margin: 0 0 10px 0; color: #333; border-bottom: 2px solid {color}; padding-bottom: 5px;">
+                    {uni['name']}
+                </h3>
+                <div style="margin: 8px 0;">
+                    <img src="{uni['logo_url']}" alt="{uni['name']} logo" 
+                         style="max-width: 60px; max-height: 40px; float: right; margin-left: 10px;"
+                         onerror="this.style.display='none'">
+                    <p style="margin: 3px 0;"><b>📍 Location:</b> {uni['city']}</p>
+                    <p style="margin: 3px 0;"><b>👥 Enrollment:</b> {uni['enrollment']:,} students</p>
+                    <p style="margin: 3px 0;"><b>🏛️ Type:</b> {uni['type']}</p>
+                    <p style="margin: 3px 0;"><b>📅 Founded:</b> {uni['founded']}</p>
+                    <p style="margin: 8px 0 3px 0;">
+                        <a href="{uni['website']}" target="_blank" 
+                           style="color: {color}; text-decoration: none; font-weight: bold;">
+                           🔗 Visit Website
+                        </a>
+                    </p>
+                </div>
+                <p style="margin: 5px 0 0 0; font-size: 10px; color: #666; clear: both;">
+                    💡 Universities often have low property values due to non-profit tax exemptions
+                </p>
+            </div>
+            """
+
+            # Create marker with university branding
+            folium.CircleMarker(
+                location=[uni["latitude"], uni["longitude"]],
+                radius=radius,
+                popup=folium.Popup(popup_html, max_width=300),
+                tooltip=f"{uni['name']} - {uni['enrollment']:,} students",
+                color=color,
+                fillColor=color,
+                fillOpacity=0.7,
+                weight=weight,
+                opacity=0.9,
+            ).add_to(folium_map)
+
+        # Add university legend
+        self._add_university_legend(folium_map, len(universities))
+
+        return folium_map
+
+    def _add_university_legend(self, folium_map, university_count):
+        """Add legend for university markers."""
+        stats = self.university_data.get_university_stats()
+
+        legend_html = f"""
+        <div style="position: fixed; 
+                    bottom: 120px; left: 50px; width: 240px; height: 140px; 
+                    background-color: white; border:2px solid grey; z-index:9999; 
+                    font-size:12px; padding: 8px; border-radius: 5px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h4 style="margin-top:0; color: #333;"><b>🎓 Boston Area Universities</b></h4>
+        <p style="margin: 3px 0;"><span style="color: #1f77b4;">●</span> Private Universities</p>
+        <p style="margin: 3px 0;"><span style="color: #ff7f0e;">●</span> Public Universities</p>
+        <p style="margin: 5px 0; font-size: 11px; color: #666;">
+            <b>Universities shown:</b> {university_count} of {stats['total_universities']}
+        </p>
+        <p style="margin: 3px 0; font-size: 11px; color: #666;">
+            <b>Total enrollment:</b> {stats['total_enrollment']:,} students
+        </p>
+        <p style="margin: 3px 0; font-size: 10px; color: #888;">
+            Marker size indicates enrollment • Click for details
+        </p>
+        <p style="margin: 3px 0; font-size: 10px; color: #888;">
+            💡 Universities have low property values (tax-exempt)
+        </p>
+        </div>
+        """
+        folium_map.get_root().html.add_child(folium.Element(legend_html))
+
+    def create_grid_with_university_overlay(
+        self,
+        gdf: gpd.GeoDataFrame,
+        value_column: str = "TOTAL_VALUE",
+        grid_size_meters: float = 402.25,  # 0.25 mile = 402.25 meters
+        center: Optional[tuple] = None,
+        zoom_start: int = 12,
+        max_zoom: int = 18,
+        include_transit: bool = False,
+    ) -> folium.Map:
+        """
+        Create a combined grid-based property visualization with university overlay.
+
+        This creates the grid-based property value visualization and overlays
+        major Boston area universities with their logos and information.
+
+        Args:
+            gdf: GeoDataFrame with geometries and values
+            value_column: Column containing property values
+            grid_size_meters: Size of each grid square in meters (default: 0.25 mile)
+            center: Map center as (lat, lon). If None, uses data centroid
+            zoom_start: Initial zoom level
+            max_zoom: Maximum zoom level
+            include_transit: Whether to also include transit overlay
+
+        Returns:
+            Folium Map object with combined property grid and university overlay
+        """
+        logger.info("Creating combined property grid + university overlay...")
+
+        # First create the base property grid map
+        logger.info("Creating property value grid...")
+        if include_transit:
+            map_obj = self.create_grid_with_transit_overlay(
+                gdf=gdf,
+                value_column=value_column,
+                grid_size_meters=grid_size_meters,
+                center=center,
+                zoom_start=zoom_start,
+                max_zoom=max_zoom,
+            )
+        else:
+            map_obj = self.create_grid_based_value_map(
+                gdf=gdf,
+                value_column=value_column,
+                grid_size_meters=grid_size_meters,
+                center=center,
+                zoom_start=zoom_start,
+                max_zoom=max_zoom,
+            )
+
+        # Add university overlay
+        map_obj = self._add_university_overlay(map_obj, filter_by_bounds=True)
+        logger.info(f"Added university markers to map")
 
         return map_obj

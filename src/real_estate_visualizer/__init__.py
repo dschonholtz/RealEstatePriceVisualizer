@@ -1,13 +1,19 @@
-"""Real Estate Visualizer package for property value mapping and analysis."""
+"""
+Real Estate Price Visualizer package for Boston area property analysis.
+"""
 
-from .grid_visualizer import GridBasedVisualizer
+__version__ = "0.1.0"
 
-# Export with both names for backward compatibility
-NeighborhoodValueVisualizer = GridBasedVisualizer
+# Only import on-demand to avoid dependency issues
+# Components can be imported directly:
+# from .data_loader import PropertyDataLoader
+# from .grid_visualizer import GridBasedVisualizer
+# from .university_data import BostonUniversityData
 
 
 def main() -> None:
     print("Hello from real-estate-visualizer!")
 
 
-__all__ = ["GridBasedVisualizer", "NeighborhoodValueVisualizer"]
+# Note: No automatic imports to avoid dependency issues
+__all__ = []
