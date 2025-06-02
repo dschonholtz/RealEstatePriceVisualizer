@@ -27,6 +27,17 @@
 - Unit tests go in `tests/` directory
 - Generated outputs go in appropriate output directories (e.g., `scripts/[script]_output/`)
 
+## Deployment Output Management
+
+**CRITICAL: Top-level `index.html` is the deployed visualization**
+
+- **NEVER DELETE** the top-level `index.html` file
+- **ALWAYS UPDATE** `index.html` with the final production visualization output
+- This file is what gets displayed and deployed to users
+- When generating new visualizations, copy the best output to replace `index.html`
+- The `index.html` should always contain the latest, best version of the grid-based visualization
+- Scripts should output to their own directories, then copy final result to `index.html`
+
 ## Terminal/PowerShell Workarounds
 
 - **PowerShell display issues**: Commands may show errors but still execute successfully
@@ -68,6 +79,7 @@
 
 - Input: Boston GeoJSON parcels + CSV assessment data
 - Output: HTML interactive maps, PNG screenshots, CSV data, neighborhood value visualizations
+- **Primary Output**: Top-level `index.html` (deployed visualization)
 
 ## MANDATORY Task Management & Cleanup Protocol
 
@@ -93,9 +105,10 @@
 
 - **Remove ALL temporary files** from `scratch/`
 - **Delete outdated scripts** that are superseded
-- **Remove ALL generated outputs** that will be regenerated
+- **Remove ALL generated outputs** that will be regenerated (EXCEPT `index.html`)
 - **Delete duplicate/redundant files**
 - **Remove .DS_Store and other system files**
+- **PRESERVE top-level `index.html`** - this is the deployed output
 
 #### B. Code Cleanup
 
@@ -109,11 +122,18 @@
 - **Compress completed task details** to essential outcomes only
 - **NEVER create additional markdown files** (only README.md and TASK_LIST.md allowed)
 
+#### D. Deployment Update
+
+- **Update `index.html`** with the final production visualization
+- **Verify `index.html`** displays correctly in browser
+- **Ensure `index.html`** contains the best version of the grid-based visualization
+
 ### 4. Verification Requirements
 
 - **Run complete test suite**: `uv run pytest` must pass
 - **Verify main script functionality**: Production script must work
 - **Check that cleanup didn't break anything**
+- **Verify `index.html`** displays the latest visualization correctly
 
 ### 5. Task Completion
 
@@ -163,6 +183,7 @@
 - `scripts/[script]_output/` - Final production outputs (regenerated each run)
 - `tests/` - All test files (permanent)
 - `src/` - All source code (permanent)
+- **`index.html`** - **CRITICAL DEPLOYED OUTPUT** (preserve and update only)
 
 ### Development Files (ALWAYS Clean)
 
@@ -172,9 +193,10 @@
 
 ### Archive Strategy
 
-- **Keep**: Only final production script and source code
-- **Remove**: ALL intermediate files, duplicate scripts, old outputs
+- **Keep**: Only final production script, source code, and `index.html`
+- **Remove**: ALL intermediate files, duplicate scripts, old outputs (except `index.html`)
 - **Regenerate**: All visualizations and outputs with each run
+- **Update**: `index.html` with the latest best visualization
 
 ## Best Practices
 

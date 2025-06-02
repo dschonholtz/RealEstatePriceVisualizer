@@ -5,6 +5,30 @@
 
 ---
 
+## Current Sprint: Transit Integration & Simplified Visualization
+
+### Task 3: Simplified Transit Integration ✅
+
+- [x] 3.1 Remove bus stop clutter and complexity
+  - [x] 3.1.1 Filter out all bus stops from visualization (removed 7,416 bus stops)
+  - [x] 3.1.2 Keep only Heavy Rail, Light Rail (Green Line), and Commuter Rail
+  - [x] 3.1.3 Reduce from 7,823 total stops to 395 rail-only stops
+- [x] 3.2 Simplify visualization approach
+  - [x] 3.2.1 Remove buffer zones/accessibility circles for cleaner look
+  - [x] 3.2.2 Replace large transit icons with minimal 3px circle markers
+  - [x] 3.2.3 Consolidate transit code directly into grid_visualizer.py
+  - [x] 3.2.4 Remove separate transit_integration.py module
+- [x] 3.3 Optimize performance and file size
+  - [x] 3.3.1 Reduce output file size from 32MB to 15.7MB (51% reduction)
+  - [x] 3.3.2 Simplify legend and remove complex UI elements
+  - [x] 3.3.3 Use simple color coding: Red (Heavy Rail), Green (Green Line), Purple (Commuter Rail)
+- [x] 3.4 Update main visualization deployment
+  - [x] 3.4.1 Generate new simplified grid + rail transit overlay
+  - [x] 3.4.2 Update index.html with cleaner 15.7MB visualization
+  - [x] 3.4.3 Maintain option 5 in main script for combined visualization
+
+**Outcome**: ✅ **TRANSIT INTEGRATION SIMPLIFIED** - Clean rail-only visualization that shows major transit connections without overwhelming bus stop clutter!
+
 ## Current Sprint: Selective Visualization Generation
 
 ### Task 2: Grid Refinement - Quarter-Mile Grids with Deciles ✅
@@ -79,12 +103,12 @@
 ### Core Technology Stack
 
 - **Main Script**: `scripts/boston_neighborhood_zones.py`
-- **Visualizer**: `NeighborhoodValueVisualizer` (src/real_estate_visualizer/improved_heat_maps.py)
-- **Selection System**: Command line args or interactive menu
-- **Dependencies**: folium, geopandas, pandas, numpy, scipy
-- **Data Coverage**: 169,891 Boston properties ($100 - $969M, median $637K)
+- **Visualizer**: `GridBasedVisualizer` (src/real_estate_visualizer/grid_visualizer.py)
+- **Selection System**: Command line args or interactive menu (1-5)
+- **Dependencies**: folium, geopandas, pandas, numpy
+- **Data Coverage**: 308,710 Greater Boston metro properties ($100 - $1.6B, median $785K)
 
-### Three Visualization Options
+### Five Visualization Options
 
 #### 1. 📊 Parcel Choropleth (`boston_parcel_choropleth.html`)
 
@@ -110,6 +134,22 @@
 - **Pros**: Distinct tiers (Affordable/Moderate/High/Luxury), excellent performance
 - **Cons**: Interpolates to zero when zooming, complex color scheme
 
+#### 4. 📋 Grid-Based Zones (`boston_grid_based_zones.html`)
+
+- **Performance**: FAST (~30 seconds), 18MB file
+- **Accuracy**: Excellent - median values per 0.25-mile grid square using deciles
+- **Use Case**: Quick overview of median property values without interpolation
+- **Pros**: No interpolation to zero, decile classification, click for details
+- **Cons**: Grid-based rather than exact property boundaries
+
+#### 5. 🚇 Grid + Rail Transit Overlay (`boston_grid_plus_transit_overlay.html`)
+
+- **Performance**: FAST (~45 seconds), 15.7MB file
+- **Accuracy**: Excellent - property grid plus rail transit context
+- **Use Case**: Understanding transit impact on property values
+- **Pros**: Shows rail transit connections, minimal markers, clean visualization
+- **Cons**: Rail-only (no bus routes), simplified transit representation
+
 ### Usage Examples
 
 ```bash
@@ -117,6 +157,8 @@
 python scripts/boston_neighborhood_zones.py 1  # Choropleth
 python scripts/boston_neighborhood_zones.py 2  # Quartile heat map
 python scripts/boston_neighborhood_zones.py 3  # Multi-tier heat map
+python scripts/boston_neighborhood_zones.py 4  # Grid-based zones
+python scripts/boston_neighborhood_zones.py 5  # Grid + rail transit
 
 # Interactive interface
 python scripts/boston_neighborhood_zones.py    # Shows menu
@@ -167,6 +209,23 @@ python scripts/boston_neighborhood_zones.py    # Shows menu
 - Excellent for market segmentation analysis
 - Clear separation of luxury areas
 
+### 📋 Property Value Grid Analysis
+
+**Use**: Grid-Based Zones (Option 4)
+
+- No interpolation artifacts - shows actual median values
+- Quarter-mile grid squares with decile classification
+- Great for understanding value patterns without distortion
+
+### 🚇 Transit Impact Analysis
+
+**Use**: Grid + Rail Transit Overlay (Option 5)
+
+- Combines property values with major rail transit stations
+- Shows relationship between transit access and property values
+- Clean visualization with minimal markers (Heavy Rail, Green Line, Commuter Rail)
+- Perfect for understanding transit-oriented development patterns
+
 ### 🔍 Detailed Property Analysis
 
 **Use**: Parcel Choropleth (Option 1)
@@ -176,6 +235,6 @@ python scripts/boston_neighborhood_zones.py    # Shows menu
 - No interpolation artifacts
 - Worth the wait for detailed research
 
-**Current Status: MISSION ACCOMPLISHED** 🎯
+**Current Status: ENHANCED WITH TRANSIT INTEGRATION** 🎯
 
-The system now provides the perfect balance - fast heat maps for overview analysis and detailed choropleth for precision work. Users can choose the right tool for their specific needs without being forced into expensive operations.
+The system now provides comprehensive analysis capabilities - from quick overviews to detailed property analysis, plus transit impact understanding. The simplified rail transit overlay shows major transportation connections without overwhelming detail, perfect for understanding how public transit affects Greater Boston property values.
